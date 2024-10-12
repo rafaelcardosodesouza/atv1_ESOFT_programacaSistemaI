@@ -20,18 +20,19 @@ public class Main {
 
 
     public static void inicioJogo() {
-
         int op = 0;
         try {
-        limpaTela();
-        digitarTexto(textos.apresentacao, 5);
-
-        digitarTexto(textos.apontador, 200);
-
+            limpaTela();
+            digitarTexto(textos.apresentacao, 0);
+            digitarTexto(textos.apontador, 200);
             op = sc.nextInt();
-        } catch (Exception e) {
-            System.out.println(e.fillInStackTrace());
+        } catch (InputMismatchException e) {
+            System.out.println("Erro: Entrada inválida. Por favor, insira um número.");
+            sc.nextLine();  // Limpa o buffer para evitar loops infinitos
+            inicioJogo();  // Reinicia o menu
+            return;
         }
+
         switch (op) {
             case 1:
                 novoJogo();
@@ -46,13 +47,16 @@ public class Main {
                 despedida();
                 break;
             default:
-                break;
+                System.out.println("Opção inválida.");
+                inicioJogo();
         }
     }
 
     private static void historico() {
         if (historicoPartidas.isEmpty()) {
             System.out.println("Nenhum jogo jogado até o momento.");
+            pausa();
+            inicioJogo();
         } else {
             System.out.println("Histórico de jogos:");
             for (Partida partida : historicoPartidas) {
@@ -61,6 +65,9 @@ public class Main {
                         partida.getTentativas(),
                         partida.getData());
             }
+            System.out.println("Preciona enter para continuar....");
+            sc.nextLine();
+            inicioJogo();
         }
 
 
@@ -68,73 +75,92 @@ public class Main {
 
     private static void novoJogo() {
         int op = sc.nextInt();
-        switch (op) {
-            case 1:
-                if(nivelInicial == -1){
-                    int novoJogo = random.nextInt(textos.novoJogo.length);
-                    digitarTexto(textos.novoJogo[novoJogo], novoJogo);
 
-                    digitarTexto(textos.nivelInvalido, 100);
-                    configura();
+        if (nivelInicial == -1) {
+            int novoJogo = random.nextInt(textos.novoJogo.length);
+            digitarTexto(textos.novoJogo[novoJogo], novoJogo);
 
-
-                }
-                game(nivelInicial, nivelFinal);
-                break;
-            case 2:
-                break;
-            case 0:
-                break;
-
-            default:
-                break;
+            digitarTexto(textos.nivelInvalido, 100);
+            configura();
 
         }
+        game(nivelInicial, nivelFinal);
+
 
     }
 
     private static void configura() {
-        digitarTexto(textos.configValoresInicial, 100);
-        nivelInicial = sc.nextInt();
-        digitarTexto(textos.configValoresFinal, 100);
-        nivelFinal = sc.nextInt();
-        digitarTexto(textos.configurado, 100);
+        try {
+            digitarTexto(textos.configValoresInicial, 100);
+            nivelInicial = sc.nextInt();
+            digitarTexto(textos.configValoresFinal, 100);
+            nivelFinal = sc.nextInt();
 
+            if (nivelInicial >= nivelFinal) {
+                throw new IllegalArgumentException("O valor inicial deve ser menor que o valor final.");
+            }
+
+            digitarTexto(textos.configurado, 100);
+        } catch (InputMismatchException e) {
+            System.out.println("Erro: Entrada inválida. Insira um número válido.");
+            sc.nextLine();  // Limpa o buffer
+            configura();
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            configura();
+        }
     }
 
     private static void game(int nivelInicial, int nivelFinal) {
-        // Gera um número aleatório entre (inclusive) e(exclusive)
         int numeroSorteado = random.nextInt(nivelFinal - nivelInicial) + nivelInicial;
         int tentativas = 0;
 
-        digitarTexto(textos.digiteNumero, 100);
-        int op = sc.nextInt();
+        try {
+            digitarTexto(textos.digiteNumero, 100);
+            int op = sc.nextInt();
 
-        while(true){
-            tentativas++;
-            if(op == numeroSorteado){
-                int x = random.nextInt(textos.parabens.length);
-                String texto = textos.parabens[x];
-                System.out.printf(texto, tentativas);
+            while (true) {
+                tentativas++;
+                if (op == numeroSorteado) {
+                    int x = random.nextInt(textos.parabens.length);
+                    String texto = String.format(textos.parabens[x], tentativas);
+                    System.out.println(texto);
 
-                System.out.println("Deseja salvar? \n1 - Sim \n 2 - Não");
-                int i = sc.nextInt();
-                if(i == 1){
-                    System.out.println("Qual o seu nome?");
-                    String nome = sc.nextLine();
-                    sc.nextLine();
-                    salvarHistorico(nome, tentativas);
-                }else{
-                    int indece = random.nextInt(textos.naoSalvar.length);
-                    digitarTexto(textos.naoSalvar[indece], indece);
+                    System.out.println("Deseja salvar? \n1 - Sim \n 2 - Não");
+                    int i = sc.nextInt();
+
+                    if (i == 1) {
+                        System.out.println("Qual o seu nome?");
+                        sc.nextLine();  // Limpa o buffer
+                        String nome = sc.nextLine();
+                        salvarHistorico(nome, tentativas);
+                    } else {
+                        int indice = random.nextInt(textos.naoSalvar.length);
+                        digitarTexto(textos.naoSalvar[indice], indice);
+                    }
+
+                    novoJogo();
+                } else {
+
+                    int x = random.nextInt(textos.analisando.length);
+                    System.out.print(textos.analisando[x]);
+
+                    if (op < numeroSorteado) {
+                        x = random.nextInt(textos.chuteMenor.length);
+                        System.out.printf(textos.chuteMenor[x] + "\n", op);
+                    } else {
+                        x = random.nextInt(textos.chuteMaior.length);
+                        System.out.printf(textos.chuteMaior[x] + "\n", op);
+                    }
                 }
 
-                novoJogo();
-            }else{
-                digitarTexto(textos.analisando, 150);
+                digitarTexto(textos.apontador, 100);
+                op = sc.nextInt();
             }
-            digitarTexto(textos.apontador, 100);
-            op = sc.nextInt();
+        } catch (InputMismatchException e) {
+            System.out.println("Erro: Entrada inválida. Insira um número.");
+            sc.nextLine();  // Limpa o buffer
+            game(nivelInicial, nivelFinal);  // Reinicia o jogo
         }
     }
 
@@ -161,10 +187,15 @@ public class Main {
     }
 
     private static void salvarHistorico(String nome, int tentativas) {
-        String dataAtual = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
-        historicoPartidas.add(new Partida(nome, tentativas, dataAtual));
-        inicioJogo();
+        try {
+            String dataAtual = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            historicoPartidas.add(new Partida(nome, tentativas, dataAtual));
+            inicioJogo();
+        } catch (Exception e) {
+            System.out.println("Erro ao salvar o histórico: " + e.getMessage());
+        }
     }
+
     public class textos {
 
         public static final String apresentacao = """
@@ -230,7 +261,7 @@ public class Main {
         public static final String digiteNumero = """
                 Digite o seu numero
                 """;
-        public static final String[] parabens ={
+        public static final String[] parabens = {
                 "Parabéns! Você acertou em %d tentativas!",
                 "Mandou bem! Acertou o número em %d tentativas!",
                 "Isso aí! Você é um mestre adivinhador! Só precisou de %d tentativas.",
@@ -240,16 +271,50 @@ public class Main {
                 "Que sorte a sua! Brincadeira, você é bom mesmo! Acertou em %d tentativas!",
                 "Palmas para você! Acertou o número em %d tentativas!",
                 "Você me impressionou! Parabéns por acertar em %d tentativas!",
-                "Incrível! Você é um gênio dos números! Descobriu em %d tentativas!"}
-                ;
-        public static final String analisando = "Analisando.... Errou, tenta Novamente";
+                "Incrível! Você é um gênio dos números! Descobriu em %d tentativas!"};
+        public static final String[] analisando = {
+                "Analisando... Errou, tente novamente.",
+                "Verificando... Não foi dessa vez, tente de novo.",
+                "Analisando... Opa, número incorreto! Tente outra vez.",
+                "Checando... Erro! Tente novamente.",
+                "Processando... Não foi o número certo. Tente de novo.",
+                "Analisando... Errou, continue tentando!",
+                "Verificando... O número está errado. Tente novamente.",
+                "Checando... Número incorreto, tente mais uma vez.",
+                "Processando... Que pena, você errou. Tente outra vez.",
+                "Analisando... Infelizmente, errou. Tente novamente."};
         public static final String configValoresInicial = "Digite o numero minimo que deseja tentar";
         public static final String configValoresFinal = "Digite o numero maximo que deseja tentar";
         public static final String configurado = "O sistema foi configurado, pode iniciar o seu jogo ou sair";
-        public static final String[] naoSalvar = {"Tudo bem",
+        public static final String[] naoSalvar = {
+                "Tudo bem",
                 "Tudo bem, você não é digno de estar em meu sistema",
                 "Você que sabe"};
+        public static final String[] chuteMenor = {
+                "O valor %s é menor que o número secreto.",
+                "O número %s é baixo demais, tente um maior.",
+                "Você chutou %s, e está abaixo do número correto.",
+                "O valor %s não é suficiente, tente um número maior.",
+                "O número %s está menor que o número secreto.",
+                "A escolha %s é pequena, tente algo maior.",
+                "O chute %s não alcança o número secreto.",
+                "O valor %s é inferior ao número correto.",
+                "Você chutou %s, e o número é menor do que o necessário.",
+                "O número %s está muito abaixo do número secreto."};
+
+        public static final String[] chuteMaior = {
+                "O valor %s é maior que o número secreto.",
+                "O número %s é muito alto, tente algo menor.",
+                "Você chutou %s, e está acima do número correto.",
+                "O valor %s é maior do que o necessário, tente um número menor.",
+                "O número %s está acima do número secreto.",
+                "A escolha %s é grande demais, tente algo menor.",
+                "O chute %s ultrapassa o número secreto.",
+                "O valor %s é superior ao número correto.",
+                "Você chutou %s, e o número é maior do que o esperado.",
+                "O número %s está muito acima do número secreto."};
     }
+
     public static class Partida {
         private String nome;
         private int tentativas;
@@ -272,7 +337,13 @@ public class Main {
         public String getData() {
             return data;
         }
+
     }
 
+    public static void pausa() {
+        System.out.println("Pressione Enter para continuar...");
+        sc.nextLine();
+        sc.nextLine();
+    }
 
 }
