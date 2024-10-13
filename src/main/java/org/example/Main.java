@@ -5,34 +5,50 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Main {
+    /*
+     * Variáveis globais usadas no jogo.
+     * random: Usada para gerar números aleatórios.
+     * sc: Usada para capturar a entrada do usuário pelo terminal.
+     * nivelInicial e nivelFinal: Definem o intervalo de números para o jogo.
+     */
     public static Random random = new Random();
     public static Scanner sc = new Scanner(System.in);
     public static int nivelInicial = -1;
     public static int nivelFinal = -1;
 
-    // Lista para armazenar o histórico das partidas
+    /*
+    Lista para armazenar o histórico das partidas
+     */
     private static List<Partida> historicoPartidas = new ArrayList<>();
 
+
+    /*
+     * Ponto de entrada do programa, que inicia o jogo chamando o método inicioJogo().
+     */
     public static void main(String[] args) {
         inicioJogo();
-
     }
 
-
+    /*
+     * Exibe o menu inicial do jogo e aguarda a escolha do jogador.
+     */
     public static void inicioJogo() {
         int op = 0;
         try {
-            limpaTela();
-            digitarTexto(textos.apresentacao, 0);
-            digitarTexto(textos.apontador, 200);
-            op = sc.nextInt();
+            limpaTela(); //faz a limpeza da tela do terminal caso tiver algo antes
+            digitarTexto(textos.apresentacao, 0); // insere o texto e a velocidade que é exebida
+            digitarTexto(textos.apontador, 200);// insere o texto e a velocidade que é exebida
+            op = sc.nextInt(); // Captura a opção escolhida pelo usuário.
         } catch (InputMismatchException e) {
+
+            // Tratamento para entradas inválidas.
             System.out.println("Erro: Entrada inválida. Por favor, insira um número.");
             sc.nextLine();  // Limpa o buffer para evitar loops infinitos
             inicioJogo();  // Reinicia o menu
             return;
         }
 
+        // Executa a ação baseada na escolha do usuário.
         switch (op) {
             case 1:
                 novoJogo();
@@ -40,8 +56,8 @@ public class Main {
             case 2:
                 historico();
                 break;
-            case 3:
-                //hard();
+            case 69:
+                gameSecreto();
                 break;
             case 0:
                 despedida();
@@ -52,49 +68,38 @@ public class Main {
         }
     }
 
-    private static void historico() {
-        if (historicoPartidas.isEmpty()) {
-            System.out.println("Nenhum jogo jogado até o momento.");
-            pausa();
-            inicioJogo();
-        } else {
-            System.out.println("Histórico de jogos:");
-            for (Partida partida : historicoPartidas) {
-                System.out.printf("Nome: %s | Tentativas: %d | Data: %s\n",
-                        partida.getNome(),
-                        partida.getTentativas(),
-                        partida.getData());
-            }
-            System.out.println("Preciona enter para continuar....");
-            sc.nextLine();
-            inicioJogo();
-        }
-
-
-    }
-
+    /*
+     * Inicia um novo jogo, configurando os limites e chamando a lógica principal do jogo.
+     */
     private static void novoJogo() {
-        int op = sc.nextInt();
-
-        if (nivelInicial == -1) {
-            int novoJogo = random.nextInt(textos.novoJogo.length);
-            digitarTexto(textos.novoJogo[novoJogo], novoJogo);
-
-            digitarTexto(textos.nivelInvalido, 100);
-            configura();
-
-        }
-        game(nivelInicial, nivelFinal);
+        limpaTela();
+        digitarTexto(textos.definirLimites, 80);
+        configura();
+        game(nivelInicial, nivelFinal); // Inicia o jogo com os limites configurados
 
 
     }
 
+    /*
+     * Inicia o jogo secreto, que neste caso é o Jogo da Forca.
+     */
+    private static void gameSecreto() {
+        limpaTela();
+        digitarTexto(textos.gameSecreto, 100);
+        jogoDaForca();
+    }
+
+    /*
+     * Configura os limites do jogo principal, definindo o valor inicial e final.
+     */
     private static void configura() {
         try {
-            digitarTexto(textos.configValoresInicial, 100);
+            digitarTexto(textos.configValoresInicial, 80); //Solicita o valor minimo do intervalo
             nivelInicial = sc.nextInt();
-            digitarTexto(textos.configValoresFinal, 100);
+            digitarTexto(textos.configValoresFinal, 80); //Solicita o valor maximo do intervalo
             nivelFinal = sc.nextInt();
+
+            // Verifica se o valor inicial é maior ou igual ao valor final.
 
             if (nivelInicial >= nivelFinal) {
                 throw new IllegalArgumentException("O valor inicial deve ser menor que o valor final.");
@@ -111,7 +116,12 @@ public class Main {
         }
     }
 
+    /*
+     * Logica do jogo principal
+     * */
+
     private static void game(int nivelInicial, int nivelFinal) {
+        // Sorteia um número dentro dos limites definidos.
         int numeroSorteado = random.nextInt(nivelFinal - nivelInicial) + nivelInicial;
         int tentativas = 0;
 
@@ -119,6 +129,7 @@ public class Main {
             digitarTexto(textos.digiteNumero, 100);
             int op = sc.nextInt();
 
+            // Loop do jogo, continua até o jogador acertar.
             while (true) {
                 tentativas++;
                 if (op == numeroSorteado) {
@@ -130,10 +141,12 @@ public class Main {
                     int i = sc.nextInt();
 
                     if (i == 1) {
+                        // Se o jogador escolhe salvar, captura o nome e salva o resultado.
+
                         System.out.println("Qual o seu nome?");
                         sc.nextLine();  // Limpa o buffer
                         String nome = sc.nextLine();
-                        salvarHistorico(nome, tentativas);
+                        salvarHistorico(nome, tentativas); // Salva o histórico da partida.
                     } else {
                         int indice = random.nextInt(textos.naoSalvar.length);
                         digitarTexto(textos.naoSalvar[indice], indice);
@@ -143,7 +156,7 @@ public class Main {
                 } else {
 
                     int x = random.nextInt(textos.analisando.length);
-                    System.out.print(textos.analisando[x]);
+                    System.out.println(textos.analisando[x]);
 
                     if (op < numeroSorteado) {
                         x = random.nextInt(textos.chuteMenor.length);
@@ -164,16 +177,147 @@ public class Main {
         }
     }
 
+    /*
+     * Exibe uma mensagem de despedida e encerra o jogo.
+     */
     private static void despedida() {
         int indiceDespedida = random.nextInt(textos.despedida.length); // Variável renomeada
         digitarTexto(textos.despedida[indiceDespedida], 80);
     }
 
-    public static void limpaTela() {
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
+    /*
+     * Salva o resultado da partida no histórico.
+     */
+    private static void salvarHistorico(String nome, int tentativas) {
+        try {
+            String dataAtual = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            historicoPartidas.add(new Partida(nome, tentativas, dataAtual));
+            inicioJogo();
+        } catch (Exception e) {
+            System.out.println("Erro ao salvar o histórico: " + e.getMessage());
+        }
     }
 
+
+    /*
+     * Lógica do jogo da forca.
+     */
+    private static void jogoDaForca() {
+        int indicePalavraSecreta = random.nextInt(textos.palavraSecreta.length);
+        String palavraSorteada = textos.palavraSecreta[indicePalavraSecreta];
+        Set<Character> letrasTentadas = new HashSet<>(); // Armazena as letras já tentadas
+        int tentativasRestantes = 6;
+        char[] palavraOculta = new char[palavraSorteada.length()]; // Exibe a palavra com letras ocultas.
+        Arrays.fill(palavraOculta, '_'); // Preenche a palavra oculta com '_'.
+
+        // Loop do jogo da forca, continua até acabar as tentativas ou acertar a palavra.
+        while (tentativasRestantes > 0 && new String(palavraOculta).contains("_")) {
+            System.out.println("Palavra: " + new String(palavraOculta));
+            System.out.println("Tentativas restantes: " + tentativasRestantes);
+            System.out.print("Digite uma letra: ");
+            System.out.println("\n");
+            char tentativa = sc.next().toLowerCase().charAt(0);
+
+            // Verifica se a letra já foi tentada.
+            if (!Character.isLetter(tentativa)) {
+                System.out.println("Por favor, digite uma letra válida.");
+                continue;
+            }
+
+            if (letrasTentadas.contains(tentativa)) {
+                System.out.println("Você já tentou essa letra antes.");
+                continue;
+            }
+
+            letrasTentadas.add(tentativa);// Adiciona a letra tentada ao conjunto.
+
+            // Verifica se a letra está presente na palavra sorteada.
+            if (palavraSorteada.contains(String.valueOf(tentativa))) {
+                for (int i = 0; i < palavraSorteada.length(); i++) {
+                    if (palavraSorteada.charAt(i) == tentativa) {
+                        palavraOculta[i] = tentativa;
+                    }
+                }
+                System.out.println("Bom trabalho! A letra '" + tentativa + "' está na palavra.");
+            } else {
+                tentativasRestantes--;
+                System.out.println("Que pena! A letra '" + tentativa + "' não está na palavra.");
+            }
+        }
+
+        if (tentativasRestantes > 0) {
+            // Se o jogador acertou a palavra completa.
+            System.out.println("Parabéns! Você acertou a palavra: " + palavraSorteada);
+        } else {
+            // Se o jogador esgotar as tentativas.
+
+            System.out.println("Fim de jogo! A palavra era: " + palavraSorteada);
+        }
+
+        System.out.println("Deseja jogar novamente? (1 - Sim / 2 - Não)");
+        int escolha = sc.nextInt();
+        if (escolha == 1) {
+            jogoDaForca();
+        } else {
+            inicioJogo();
+        }
+    }
+
+
+    /*
+     * Salva o resultado da partida do jogo da adivinhação
+     * */
+    private static void historico() {
+        if (historicoPartidas.isEmpty()) {
+            // caso não tiver nenhum historico
+            System.out.println("Nenhum jogo jogado até o momento.");
+            pausa();
+            inicioJogo();
+        } else {
+            // Exibe as partidas registradas.
+
+            System.out.println("Histórico de jogos:");
+            for (Partida partida : historicoPartidas) {
+                System.out.printf("Nome: %s | Tentativas: %d | Data: %s\n",
+                        partida.getNome(),
+                        partida.getTentativas(),
+                        partida.getData());
+            }
+
+            inicioJogo();
+        }
+        System.out.println("Preciona enter para continuar....");
+        sc.nextLine();
+
+
+    }
+
+    /*
+     * UTILITARIOS
+     * */
+
+    public static void limpaTela() {
+        try {
+            // Verifica o sistema operacional
+            String sistema = System.getProperty("os.name");
+
+            if (sistema.contains("Windows")) {
+                // Executa o comando 'cls' no Windows
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                // Executa o comando 'clear' no Linux e MacOS
+                new ProcessBuilder("clear").inheritIO().start().waitFor();
+            }
+        } catch (Exception e) {
+            // Em caso de erro, exibe a mensagem
+            System.out.println("Erro ao limpar o terminal: " + e.getMessage());
+        }
+    }
+
+
+    /*
+     * Função para dar efeito de escrita
+     * */
     public static void digitarTexto(String texto, int intervalo) {
         for (char caractere : texto.toCharArray()) {
             System.out.print(caractere);  // Imprime cada caractere sem pular linha
@@ -186,35 +330,28 @@ public class Main {
         System.out.println();  // Quebra a linha no final do texto
     }
 
-    private static void salvarHistorico(String nome, int tentativas) {
-        try {
-            String dataAtual = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
-            historicoPartidas.add(new Partida(nome, tentativas, dataAtual));
-            inicioJogo();
-        } catch (Exception e) {
-            System.out.println("Erro ao salvar o histórico: " + e.getMessage());
-        }
-    }
 
+    /*
+    * Biblioteca de textos, aparti daqui posso adicinar mais coisas sem nescessidade de alterar o codigo
+    * */
     public class textos {
 
         public static final String apresentacao = """
-                
-                                                ==============================================
-                                                |                                             |
-                                                |        Bem-vindo ao Jogo da Adivinhação!    |
-                                                |      Será que você vai conseguir ganhar?    |
-                                                |                                             |
-                                                ==============================================
-                                               \s
-                                                                MENU:
-                                                ----------------------------------------------
-                                                |  1 - Novo Jogo                              |
-                                                |  2 - Histórico                              |
-                                                |  3 - HARD                                   |
-                                                |                                             |
-                                                |  0 - Sair                                   |
-                                                ----------------------------------------------
+                ==============================================
+                |                                             |
+                |        Bem-vindo ao Jogo da Adivinhação!    |
+                |      Será que você vai conseguir ganhar?    |
+                |                                             |
+                ==============================================
+                                                \s
+                                 MENU:
+                ----------------------------------------------
+                |  1 - Novo Jogo                              |
+                |  2 - Histórico                              |
+                |  ? - Game Secreto                           |
+                |                                             |
+                |  0 - Sair                                   |
+                ----------------------------------------------
                 """;
         public static final String[] despedida = {
                 "Foi um jogo legal!",
@@ -240,22 +377,10 @@ public class Main {
                 "Traga seu melhor jogo!",
                 "Espero que esteja preparado para uma batalha épica!"
         };
-        public static final String novaPartida = """
-                ======================================
-                |                                    |
-                |           MENU PRINCIPAL           |
-                |                                    |
-                |  1 - Iniciar                       |
-                |  2 - Configurar a dificuldade      |
-                |  0 - Voltar                        |
-                |                                    |
-                ======================================
-                """;
         public static final String apontador = """
-                     >>>>> 
-                
+                >>>>>\s
                 """;
-        public static final String nivelInvalido = """
+        public static final String definirLimites = """
                 Foi detectado um novo jogo, temos que configurar os limites!
                 """;
         public static final String digiteNumero = """
@@ -313,6 +438,13 @@ public class Main {
                 "O valor %s é superior ao número correto.",
                 "Você chutou %s, e o número é maior do que o esperado.",
                 "O número %s está muito acima do número secreto."};
+        public static final String gameSecreto = """
+                Meus parabens voce achou um game secreto, o jogo a seguir sera o jogo da forca
+                """;
+        public static final String[] palavraSecreta = {"programacao", "desenvolvedor", "algoritmo", "compilador", "sintaxe",
+                "objeto", "classe", "heranca", "encapsulamento", "abstracao",
+                "polimorfismo", "interface", "metodo", "atributo", "instancia",
+                "variavel", "constante", "biblioteca", "framework", "estrutura"};
     }
 
     public static class Partida {
