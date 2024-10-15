@@ -42,7 +42,7 @@ public class Main {
         } catch (InputMismatchException e) {
 
             // Tratamento para entradas inválidas.
-            System.out.println("Erro: Entrada inválida. Por favor, insira um número.");
+            System.out.println(textos.ANSI_RED + "Erro: Entrada inválida. Por favor, insira um número." + textos.ANSI_RESET);
             sc.nextLine();  // Limpa o buffer para evitar loops infinitos
             inicioJogo();  // Reinicia o menu
             return;
@@ -63,7 +63,7 @@ public class Main {
                 despedida();
                 break;
             default:
-                System.out.println("Opção inválida.");
+                System.out.println(textos.ANSI_RED + "Opção inválida." + textos.ANSI_RESET);
                 inicioJogo();
         }
     }
@@ -102,7 +102,7 @@ public class Main {
             // Verifica se o valor inicial é maior ou igual ao valor final.
 
             if (nivelInicial >= nivelFinal) {
-                throw new IllegalArgumentException("O valor inicial deve ser menor que o valor final.");
+                throw new IllegalArgumentException(textos.ANSI_RED + "O valor inicial deve ser menor que o valor final." + textos.ANSI_RESET);
             }
 
             digitarTexto(textos.configurado, 100);
@@ -122,60 +122,81 @@ public class Main {
 
     private static void game(int nivelInicial, int nivelFinal) {
         // Sorteia um número dentro dos limites definidos.
+        limpaTela();
         int numeroSorteado = random.nextInt(nivelFinal - nivelInicial) + nivelInicial;
         int tentativas = 0;
+        String opString = "";
 
         try {
-            digitarTexto(textos.digiteNumero, 100);
-            int op = sc.nextInt();
-
-            // Loop do jogo, continua até o jogador acertar.
+            // Loop do jogo, continua até o jogador acertar ou digitar "sair".
+            sc.nextLine(); // limpar a memoria
             while (true) {
+                pausa();
+                 limpaTela();
+
+                System.out.println("Digite seu palpite ou digite '" + textos.ANSI_RED + "sair" + textos.ANSI_RESET + "' para encerrar:");
+                opString = sc.nextLine().toLowerCase();
+
+                // Verifica se o jogador deseja sair.
+                if (opString.equals("sair")) {
+                    System.out.println(textos.ANSI_YELLOW + "Voltando...." + textos.ANSI_RESET);
+                    despedida();  // Metodo para encerrar o jogo ou retornar ao menu.
+                    inicioJogo();  // Encerra o metodo e retorna ao ponto de chamada.
+                }
+
+                // Converte a entrada do jogador para númer.
+                int op;
+                try {
+                    op = Integer.parseInt(opString);
+                } catch (NumberFormatException e) {
+                    System.out.println("Erro: Entrada inválida. Insira um número válido ou " + textos.ANSI_RED + "sair" + textos.ANSI_RESET + ".");
+                    continue;  // Reinicia o loop, pedindo uma nova entrada.
+                }
+
                 tentativas++;
+
+                // Verifica se o jogador acertou o número sorteado.
                 if (op == numeroSorteado) {
                     int x = random.nextInt(textos.parabens.length);
                     String texto = String.format(textos.parabens[x], tentativas);
                     System.out.println(texto);
 
-                    System.out.println("Deseja salvar? \n1 - Sim \n 2 - Não");
+                    System.out.println("Deseja salvar? \n1 - " + textos.ANSI_GREEN + "Sim" + textos.ANSI_RESET + "\n 2 - " + textos.ANSI_RED + "Não" + textos.ANSI_RESET);
                     int i = sc.nextInt();
 
                     if (i == 1) {
                         // Se o jogador escolhe salvar, captura o nome e salva o resultado.
-
                         System.out.println("Qual o seu nome?");
                         sc.nextLine();  // Limpa o buffer
                         String nome = sc.nextLine();
-                        salvarHistorico(nome, tentativas); // Salva o histórico da partida.
+                        salvarHistorico(nome, tentativas);  // Salva o histórico da partida.
                     } else {
                         int indice = random.nextInt(textos.naoSalvar.length);
                         digitarTexto(textos.naoSalvar[indice], indice);
                     }
 
-                    novoJogo();
+                    novoJogo();  // Pergunta se o jogador quer iniciar um novo jogo.
+                    return;
                 } else {
-
                     int x = random.nextInt(textos.analisando.length);
                     System.out.println(textos.analisando[x]);
 
                     if (op < numeroSorteado) {
                         x = random.nextInt(textos.chuteMenor.length);
-                        System.out.printf(textos.chuteMenor[x] + "\n", op);
+                        System.out.printf(textos.ANSI_RED + textos.chuteMenor[x] + textos.ANSI_RESET + "\n", op);
                     } else {
                         x = random.nextInt(textos.chuteMaior.length);
-                        System.out.printf(textos.chuteMaior[x] + "\n", op);
+                        System.out.printf(textos.ANSI_RED + textos.chuteMaior[x] + textos.ANSI_RESET + "\n", op);
                     }
                 }
-
-                digitarTexto(textos.apontador, 100);
-                op = sc.nextInt();
             }
         } catch (InputMismatchException e) {
-            System.out.println("Erro: Entrada inválida. Insira um número.");
+            System.out.println(textos.ANSI_RED + "Erro: Entrada inválida. Insira um número." + textos.ANSI_RESET);
             sc.nextLine();  // Limpa o buffer
-            game(nivelInicial, nivelFinal);  // Reinicia o jogo
+            game(nivelInicial, nivelFinal);  // Reinicia o jogo.
         }
     }
+
 
     /*
      * Exibe uma mensagem de despedida e encerra o jogo.
@@ -194,7 +215,7 @@ public class Main {
             historicoPartidas.add(new Partida(nome, tentativas, dataAtual));
             inicioJogo();
         } catch (Exception e) {
-            System.out.println("Erro ao salvar o histórico: " + e.getMessage());
+            System.out.println(textos.ANSI_RED + "Erro ao salvar o histórico: " + textos.ANSI_RESET + e.getMessage());
         }
     }
 
@@ -212,20 +233,32 @@ public class Main {
 
         // Loop do jogo da forca, continua até acabar as tentativas ou acertar a palavra.
         while (tentativasRestantes > 0 && new String(palavraOculta).contains("_")) {
+
+
+            limpaTela();
+            System.out.println(textos.ANSI_GREEN + "Dica: " + textos.ANSI_YELLOW + "Termos relacionado a programação" + textos.ANSI_RESET);
+            System.out.println("  +---+");
+            System.out.println("  |   |");
+            System.out.println("  |   " + (tentativasRestantes < 6 ? 'O' : ' '));
+            System.out.println("  |  " + (tentativasRestantes < 4 ? '\\' : ' ') + (tentativasRestantes < 5 ? '|' : ' ') + (tentativasRestantes < 3 ? '/' : ' '));
+            System.out.println("  |  " + (tentativasRestantes < 2 ? '|' : ' '));
+            System.out.println("  |  " + (tentativasRestantes < 1 ? "/ \\" : ' '));
+            System.out.println(" -+");
+
             System.out.println("Palavra: " + new String(palavraOculta));
-            System.out.println("Tentativas restantes: " + tentativasRestantes);
+            System.out.println("Tentativas restantes: " + textos.ANSI_RED + tentativasRestantes + textos.ANSI_RESET);
             System.out.print("Digite uma letra: ");
             System.out.println("\n");
             char tentativa = sc.next().toLowerCase().charAt(0);
 
             // Verifica se a letra já foi tentada.
             if (!Character.isLetter(tentativa)) {
-                System.out.println("Por favor, digite uma letra válida.");
+                System.out.println(textos.ANSI_RED + "Por favor, digite uma letra válida." + textos.ANSI_RESET);
                 continue;
             }
 
             if (letrasTentadas.contains(tentativa)) {
-                System.out.println("Você já tentou essa letra antes.");
+                System.out.println(textos.ANSI_RED + "Você já tentou essa letra antes." + textos.ANSI_RESET);
                 continue;
             }
 
@@ -238,23 +271,32 @@ public class Main {
                         palavraOculta[i] = tentativa;
                     }
                 }
-                System.out.println("Bom trabalho! A letra '" + tentativa + "' está na palavra.");
+                System.out.println("Bom trabalho! A letra '" + textos.ANSI_BLUE + tentativa + textos.ANSI_RESET + "' está na palavra.");
             } else {
                 tentativasRestantes--;
-                System.out.println("Que pena! A letra '" + tentativa + "' não está na palavra.");
+                System.out.println("Que pena! A letra '" + textos.ANSI_RED + tentativa + textos.ANSI_RESET + "' não está na palavra.");
             }
         }
 
         if (tentativasRestantes > 0) {
             // Se o jogador acertou a palavra completa.
-            System.out.println("Parabéns! Você acertou a palavra: " + palavraSorteada);
+            System.out.println("Parabéns! Você acertou a palavra: " + textos.ANSI_BLUE + palavraSorteada + textos.ANSI_RESET);
         } else {
             // Se o jogador esgotar as tentativas.
+            limpaTela();
+            // Se o jogador esgotar as tentativas.
+            System.out.println("  +---+");
+            System.out.println("  |   |");
+            System.out.println("  |   O");
+            System.out.println("  |  \\|/");
+            System.out.println("  |   |");
+            System.out.println("  |  / \\");
+            System.out.println(" -+"); // <-- Movida para dentro do else
+            System.out.println("Fim de jogo! A palavra era: " + textos.ANSI_YELLOW + palavraSorteada + textos.ANSI_RESET);
 
-            System.out.println("Fim de jogo! A palavra era: " + palavraSorteada);
         }
 
-        System.out.println("Deseja jogar novamente? (1 - Sim / 2 - Não)");
+        System.out.println("Deseja jogar novamente? (1 - " + textos.ANSI_BLUE + "Sim" + textos.ANSI_RESET + " / 2 - " + textos.ANSI_RED + "Não" + textos.ANSI_RESET + ")");
         int escolha = sc.nextInt();
         if (escolha == 1) {
             jogoDaForca();
@@ -268,27 +310,20 @@ public class Main {
      * Salva o resultado da partida do jogo da adivinhação
      * */
     private static void historico() {
-        if (historicoPartidas.isEmpty()) {
-            // caso não tiver nenhum historico
-            System.out.println("Nenhum jogo jogado até o momento.");
-            pausa();
-            inicioJogo();
-        } else {
-            // Exibe as partidas registradas.
 
-            System.out.println("Histórico de jogos:");
+        if (!historicoPartidas.isEmpty()) {
+            System.out.println(textos.ANSI_YELLOW + "Histórico de jogos:" + textos.ANSI_RESET);
             for (Partida partida : historicoPartidas) {
                 System.out.printf("Nome: %s | Tentativas: %d | Data: %s\n",
                         partida.getNome(),
                         partida.getTentativas(),
                         partida.getData());
             }
-
             inicioJogo();
         }
-        System.out.println("Preciona enter para continuar....");
-        sc.nextLine();
-
+        System.out.println(textos.ANSI_RED + "Nenhum jogo jogado até o momento." + textos.ANSI_RESET);
+        pausa();
+        inicioJogo();
 
     }
 
@@ -332,9 +367,9 @@ public class Main {
 
 
     /*
-    * Biblioteca de textos, aparti daqui posso adicinar mais coisas sem nescessidade de alterar o codigo
-    * */
-    public class textos {
+     * Biblioteca de textos, aparti daqui posso adicinar mais coisas sem nescessidade de alterar o codigo
+     * */
+    public static class textos {
 
         public static final String apresentacao = """
                 ==============================================
@@ -445,6 +480,12 @@ public class Main {
                 "objeto", "classe", "heranca", "encapsulamento", "abstracao",
                 "polimorfismo", "interface", "metodo", "atributo", "instancia",
                 "variavel", "constante", "biblioteca", "framework", "estrutura"};
+        public static final String ANSI_RESET = "\u001B[0m";
+        public static final String ANSI_BLUE = "\u001B[34m";
+        public static final String ANSI_RED = "\u001B[31m";
+        public static final String ANSI_GREEN = "\u001B[32m";
+        public static final String ANSI_YELLOW = "\u001B[33m";
+
     }
 
     public static class Partida {
